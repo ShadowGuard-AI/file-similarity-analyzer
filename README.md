@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # file-similarity-analyzer
 Calculates a similarity score between two files using fuzzy hashing (e.g., ssdeep). Useful for identifying near-duplicate files or detecting code reuse. - Focused on File operations and analysis
 
