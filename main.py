@@ -1,8 +1,14 @@
 import argparse
 import logging
 import pathlib
-import ssdeep
+import sys
 import hashlib
+
+try:
+    import ssdeep
+except ImportError:
+    print("The ssdeep library is missing. Install it with: pip install -r requirements.txt", file=sys.stderr)
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
