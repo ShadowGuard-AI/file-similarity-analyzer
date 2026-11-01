@@ -5,6 +5,9 @@ import sys
 import hashlib
 
 try:
+    # The import guard runs before argparse, so without ssdeep installed
+    # even --help prints the install line and exits 1. There is no degraded
+    # mode behind it; fuzzy hashing is the whole tool.
     import ssdeep
 except ImportError:
     print("The ssdeep library is missing. Install it with: pip install -r requirements.txt", file=sys.stderr)
@@ -42,6 +45,10 @@ def calculate_similarity(file1_path, file2_path):
             file2_content = f2.read()
 
         # Calculate ssdeep hashes
+        # ssdeep gets both files whole, from memory, which is why the
+        # validation pass warns at 100 MB but still lets the file through. The
+        # MD5 path above reads in chunks; this one cannot, because the library
+        # call wants the complete buffer.
         hash1 = ssdeep.hash(file1_content)
         hash2 = ssdeep.hash(file2_content)
 
@@ -125,6 +132,11 @@ def main():
     md5_file1 = calculate_md5(file1_path)
     md5_file2 = calculate_md5(file2_path)
 
+    # The MD5 shortcut has a hole: calculate_md5 returns None on a read
+    # error, and two Nones compare equal. If both files became unreadable
+    # after validation, this prints identical for files that were never
+    # hashed. Validation just stat'ed both files, so the window is small,
+    # but it is there and I am naming it instead of hiding it.
     if md5_file1 == md5_file2:
         print("Files are identical (same MD5 hash).  Skipping ssdeep")
         exit(0) # Exit normally, files are the same
@@ -133,6 +145,9 @@ def main():
     similarity_score = calculate_similarity(file1_path, file2_path)
 
     if similarity_score != -1:
+        # The score is reported, never judged. Any value from 0 to 100 exits
+        # 0; a threshold would be a policy decision for the caller, not for a
+        # measurement tool.
         print(f"Similarity score between '{file1_path}' and '{file2_path}': {similarity_score}")
     else:
         print("Failed to calculate similarity score. See logs for details.")
